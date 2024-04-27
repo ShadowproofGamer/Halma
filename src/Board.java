@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Board {
     private final List<int[]> moves = new ArrayList<>(8);
-    public void doMove(){
+    public void initMoves(){
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 if (i==0 && j==0) continue;
@@ -14,12 +14,13 @@ public class Board {
 
     public Map<Tile, Player> board = new HashMap<>();
     public Board() {
-        doMove();
+        initMoves();
         for (int i=0; i<16; i++) {
             for (int j = 0; j < 16; j++) {
                 board.put(Tile.of(j,i), Player.NONE);
             }
         }
+//        initBoard();
     }
     public void initBoard() {
         // Define constants
