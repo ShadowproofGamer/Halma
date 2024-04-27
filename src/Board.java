@@ -1,28 +1,60 @@
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Board {
     private final List<int[]> moves = new ArrayList<>(8);
-    public void initMoves(){
+
+    public void initMoves() {
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                if (i==0 && j==0) continue;
+                if (i == 0 && j == 0) continue;
                 moves.add(new int[]{i, j});
             }
         }
     }
 
     public Map<Tile, Player> board = new HashMap<>();
+    public List<Tile> player1Base = new ArrayList<>();
+    public List<Tile> player2Base = new ArrayList<>();
+
     public Board() {
         initMoves();
-        for (int i=0; i<16; i++) {
+        for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++) {
-                board.put(Tile.of(j,i), Player.NONE);
+                board.put(Tile.of(j, i), Player.NONE);
             }
         }
-//        initBoard();
+        initBoard();
     }
-    public void initBoard() {
+
+    public Board(String state) {
+        initMoves();
+        int iter = 0;
+        char[] newState = state.toCharArray();
+        for (char c : newState) {
+//            System.out.println(c +" "+ iter % 16 +" "+ iter / 16);
+            switch (c) {
+                case '_':
+                    board.put(Tile.of(iter % 16, iter / 16), Player.NONE);
+                    iter++;
+                    break;
+                case '1':
+                    board.put(Tile.of(iter % 16, iter / 16), Player.PLAYER1);
+                    iter++;
+                    break;
+                case '2':
+                    board.put(Tile.of(iter % 16, iter / 16), Player.PLAYER2);
+                    iter++;
+                    break;
+            }
+
+
+        }
+
+    }
+
+    private void initBoard() {
         // Define constants
         final int BOARD_SIZE = 16;
         final int PLAYER_PIECES = 5;
@@ -48,109 +80,530 @@ public class Board {
             board.put(Tile.of(i, 4), Player.PLAYER2);  // Change to PLAYER2
             board.put(Tile.of(BOARD_SIZE - 1 - i, BOARD_SIZE - 5), Player.PLAYER1);  // Change to PLAYER1
         }
+        player1Base.addAll(board.keySet().stream().filter(c -> board.get(c) == Player.PLAYER1).toList());
+        player2Base.addAll(board.keySet().stream().filter(c -> board.get(c) == Player.PLAYER2).toList());
     }
 
 
-    public void printBoard(){
-        for (int i=0; i<16; i++) {
+    public void printBoard() {
+        for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++) {
-                System.out.print(board.get(Tile.of(i, j)).getValue()+" ");
+                System.out.print(board.get(Tile.of(j, i)).getValue() + " ");
             }
             System.out.println();
         }
     }
 
-    public List<Tuple> possibleMoves(Player player) {
-        List<Tuple> moves = new ArrayList<>();
-        for (Map.Entry<Tile, Player> entry : board.entrySet()) {
-            if (entry.getValue() == player) {
-                int x = entry.getKey().getX();
-                int y = entry.getKey().getY();
-                // Add adjacent tiles as possible moves
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        int newX = x + dx;
-                        int newY = y + dy;
-                        if (isValidPosition(newX, newY) && board.get(Tile.of(newX, newY)) == Player.NONE) {
-                            moves.add(Tuple.of(newX, newY));
-                        }
-                    }
-                }
-            }
-        }
-        return moves;
+    public void movePiece(Move move) {
+        Tile startTile = move.getTileFrom();
+        Player player = board.get(startTile);
+        board.put(startTile, Player.NONE);
+        board.put(move.getTileTo(), player);
     }
 
-    public Set<Move> simpleMoves(Player player){
-        List<Tile> playerTiles = board.keySet().stream().filter(c -> board.get(c)==player).toList();
+    public void reversePiece(Move move) {
+        Tile endTile = move.getTileTo();
+        Player player = board.get(endTile);
+        board.put(endTile, Player.NONE);
+        board.put(move.getTileFrom(), player);
+    }
+
+    public ArrayList<Move> possibleMoves(Player player) {
+        ArrayList<Move> resultMoves = new ArrayList<>();
+        resultMoves.addAll(jumpMoves(player));
+        resultMoves.addAll(simpleMoves(player));
+        return resultMoves;
+    }
+
+    public Set<Move> simpleMoves(Player player) {
+        List<Tile> playerTiles = board.keySet().stream().filter(c -> board.get(c) == player).toList();
         Set<Move> resultMoves = new HashSet<>();
         //System.out.println(playerTiles);
-        for(Tile tile: playerTiles){
+        for (Tile tile : playerTiles) {
             int loc_x = tile.getX();
             int loc_y = tile.getY();
-            for(int[] vec: moves) {
-                if (isValidPosition(loc_x+vec[0], loc_y+vec[1]) && board.get(Tile.of(loc_x+vec[0], loc_y+vec[1]))==Player.NONE){
-                    resultMoves.add(Move.of(tile, Tile.of(loc_x+vec[0], loc_y+vec[1])));
+            for (int[] vec : moves) {
+                if (isValidMove(Move.of(tile, Tile.of(loc_x + vec[0], loc_y + vec[1])))) {
+                    resultMoves.add(Move.of(tile, Tile.of(loc_x + vec[0], loc_y + vec[1])));
                 }
             }
         }
         return resultMoves;
     }
 
-    public Set<Move> singleJumpsForTile(Tile tile){
-        Set<Move> resultMoves = new HashSet<>();
-        int loc_x = tile.getX();
-        int loc_y = tile.getY();
-        for(int[] vec: moves) {
-            if (isValidPosition(loc_x+2*vec[0], loc_y+2*vec[1])
-                    && board.get(Tile.of(loc_x+vec[0], loc_y+vec[1]))!=Player.NONE
-                && board.get(Tile.of(loc_x+2*vec[0], loc_y+2*vec[1]))==Player.NONE)
-            {
-                resultMoves.add(Move.of(tile, Tile.of(loc_x+2*vec[0], loc_y+2*vec[1])));
-            }
-        }
-//        System.out.println(tile+": "+resultMoves);
-        return resultMoves;
-    }
-    public Set<Move> singleJumpsForMove(Move move){
+
+    public Set<Move> singleJumpsForMove(Move move) {
         Set<Move> resultMoves = new HashSet<>();
         Tile tile = move.getTileTo();
         int loc_x = tile.getX();
         int loc_y = tile.getY();
-        for(int[] vec: moves) {
-            if (isValidPosition(loc_x+2*vec[0], loc_y+2*vec[1])
-                    && board.get(Tile.of(loc_x+vec[0], loc_y+vec[1]))!=Player.NONE
-                    && board.get(Tile.of(loc_x+2*vec[0], loc_y+2*vec[1]))==Player.NONE)
-            {
-                resultMoves.add(Move.of(move.getTileFrom(), Tile.of(loc_x+2*vec[0], loc_y+2*vec[1])));
+        for (int[] vec : moves) {
+            //debug
+//            System.out.println((loc_x + 2 * vec[0]) + "," + (loc_y + 2 * vec[1])
+//                               + " : "
+//                               + isValidMove(Move.of(tile, Tile.of((loc_x + 2 * vec[0]), (loc_y + 2 * vec[1]))))
+//                               + " : "
+//                               + (board.get(Tile.of(loc_x + vec[0], loc_y + vec[1])) != Player.NONE)
+//                               + " : " + (Tile.of((loc_x + 2 * vec[0]), (loc_y + 2 * vec[1])).equals(move.getTileFrom())));
+
+            if (isValidMove(Move.of(move.getTileFrom(), Tile.of((loc_x + 2 * vec[0]), (loc_y + 2 * vec[1]))))
+                && board.get(Tile.of((loc_x + vec[0]), (loc_y + vec[1]))) != Player.NONE
+                && !Tile.of((loc_x + 2 * vec[0]), (loc_y + 2 * vec[1])).equals(move.getTileFrom())
+            ) {
+                resultMoves.add(Move.of(move.getTileFrom(), Tile.of((loc_x + 2 * vec[0]), (loc_y + 2 * vec[1]))));
             }
         }
 //        System.out.println(tile+": "+resultMoves);
         return resultMoves;
     }
 
-    public Set<Move> jumpMoves(Player player){
-        List<Tile> playerTiles = board.keySet().stream().filter(c -> board.get(c)==player).toList();
+    public Set<Move> jumpMoves(Player player) {
+        List<Tile> playerTiles = board.keySet().stream().filter(c -> board.get(c) == player).toList();
         Set<Move> resultMoves = new HashSet<>();
         Queue<Move> frontier = new ArrayDeque<>();
         //System.out.println(playerTiles);
-        for(Tile tile: playerTiles){
-            Set<Move> temp = singleJumpsForTile(tile);
+        for (Tile tile : playerTiles) {
+            Set<Move> temp = singleJumpsForMove(Move.of(tile, tile));
             resultMoves.addAll(temp);
             frontier.addAll(temp);
-            while(!frontier.isEmpty()){
+//            if (tile.equals(Tile.of(13, 15))) {
+//                System.out.println(temp);
+//            }
+            while (!frontier.isEmpty()) {
                 Move current = frontier.poll();
+//                if (tile.equals(Tile.of(13, 15))) {
+//                    System.out.println(current);
+//                }
                 Set<Move> locTemp = singleJumpsForMove(current);
+//                if (tile.equals(Tile.of(13, 15))) {
+//                    System.out.println(locTemp);
+//                }
+                for (Move move : locTemp) {
+                    if (!resultMoves.contains(move)) frontier.add(move);
+                }
                 resultMoves.addAll(locTemp);
-                frontier.addAll(locTemp);
+
+
             }
+
         }
         return resultMoves;
     }
-
 
 
     private boolean isValidPosition(int x, int y) {
         return x >= 0 && x < 16 && y >= 0 && y < 16;
     }
+
+    private boolean isValidMove(Move move) {
+        Tile startTile = move.getTileFrom();
+        Tile endTile = move.getTileTo();
+        Player startPlayer = board.get(startTile);
+        Player endPlayer = board.get(endTile);
+//        System.out.println(startPlayer + " " + endPlayer);
+        if (isValidPosition(endTile.getX(), endTile.getY()) && endPlayer.equals(Player.NONE)) {
+//            System.out.println(move + " valid end position");
+            //Tutaj zwracamy implikację "czy gracz próbuje opuścić bazę przeciwnika?" (jest w bazie => chce wyjść)
+            if (startPlayer.equals(Player.PLAYER1)) {
+                return !player2Base.contains(startTile) || player2Base.contains(endTile);
+            } else if (startPlayer.equals(Player.PLAYER2)) {
+                return !player1Base.contains(startTile) || player1Base.contains(endTile);
+            }
+        }
+        return false;
+    }
+
+
+    //heuristics
+    public int heuristic1(Player player) {
+        AtomicInteger result = new AtomicInteger();
+        List<Tile> playerTiles = board.keySet().stream().filter(c -> board.get(c) == player).toList();
+        int MAXLEN = 15;
+        if (player.equals(Player.PLAYER1)) {
+            playerTiles.forEach(tile -> result.getAndAdd(MAXLEN - tile.getX() + MAXLEN - tile.getY()));
+        } else {
+            playerTiles.forEach(tile -> result.getAndAdd(tile.getX() + tile.getY()));
+        }
+        return result.get();
+    }
+
+
+    public int heuristic2(Player player) {
+        AtomicInteger result = new AtomicInteger(0);
+        List<Tile> playerTiles = board.keySet().stream().filter(c -> board.get(c) == player).toList();
+        int MAXLEN = 15;
+        if (player.equals(Player.PLAYER1)) {
+            playerTiles.forEach(tile ->
+                    {
+                        if (player1Base.contains(tile)) {
+                            result.getAndAdd(-5);
+                        }
+                        result.getAndAdd(MAXLEN - tile.getX() + MAXLEN - tile.getY());
+//                        System.out.println(result.get());
+                    }
+            );
+        } else if (player.equals(Player.PLAYER2)) {
+            playerTiles.forEach(tile ->
+                    {
+                        if (player2Base.contains(tile)) {
+                            result.getAndAdd(-5);
+                        }
+                        result.getAndAdd(tile.getX() + tile.getY());
+//                        System.out.println(player+"   "+tile+"   "+result.get());
+                    }
+
+            );
+        }
+//        printBoard();
+//        System.out.println(result.get()+"\n");
+        return result.get();
+    }
+
+    public int heuristic3(Player player) {
+        AtomicInteger result = new AtomicInteger(0);
+        List<Tile> playerTiles = board.keySet().stream().filter(c -> board.get(c) == player).toList();
+        List<Tile> enemyTiles = board.keySet().stream().filter(c -> board.get(c) == player).toList();
+        int MAXLEN = 15;
+        if (player.equals(Player.PLAYER1)) {
+            playerTiles.forEach(tile ->
+                    {
+                        if (player1Base.contains(tile)) {
+                            result.getAndAdd(-5);
+                        }
+                        else if (player2Base.contains(tile)) {
+                            result.getAndAdd(1);
+                        }
+                        result.getAndAdd(MAXLEN - tile.getX() + MAXLEN - tile.getY());
+                    }
+            );
+            enemyTiles.forEach(tile ->
+                {
+                    if (player2Base.contains(tile)) {
+                        result.getAndAdd(3);
+                    }
+                    if (player1Base.contains(tile)) {
+                        result.getAndAdd(-2);
+                    }
+                    result.getAndAdd(-tile.getX() -tile.getY());
+                }
+            );
+        } else if (player.equals(Player.PLAYER2)) {
+            playerTiles.forEach(tile ->
+                    {
+                        if (player2Base.contains(tile)) {
+                            result.getAndAdd(-5);
+                        }
+                        else if (player1Base.contains(tile)) {
+                            result.getAndAdd(1);
+                        }
+                        result.getAndAdd(tile.getX() + tile.getY());
+                    }
+
+            );
+            enemyTiles.forEach(tile ->
+                    {
+                        if (player1Base.contains(tile)) {
+                            result.getAndAdd(3);
+                        }
+                        if (player2Base.contains(tile)) {
+                            result.getAndAdd(-2);
+                        }
+                        result.getAndAdd(tile.getX() - MAXLEN + tile.getY() - MAXLEN);
+                    }
+            );
+        }
+//        printBoard();
+//        System.out.println(result.get()+"\n");
+        return result.get();
+    }
+
+
+    public MoveAndScore minimax(Board board, Player player, int depth, int alpha, int beta, Player originalPlayer) {
+        // Check if we reached the terminal state (game over or depth limit reached)
+        Player otherPlayer = player.equals(Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        if (isGameOver(board)) {
+            boolean thisPlayerWon = player.equals(Player.PLAYER1)
+                    ? player2Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList())
+                    : player1Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList());
+            if (thisPlayerWon) return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MIN_VALUE);
+            else return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MAX_VALUE);
+        } else if (depth == 0) {
+            return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), heuristic(board, otherPlayer));
+        }
+
+        List<Move> possibleMoves = board.possibleMoves(player);
+
+        // This variable will store the best score found so far
+        int bestScore;
+        Move bestMove = null;
+
+        if (player.equals(originalPlayer)) {
+            bestScore = Integer.MIN_VALUE;
+            for (Move move : possibleMoves) {
+//                Board newBoard = copyBoard(board); // Create a copy of the board to avoid modifying the original
+//                newBoard.movePiece(move);
+                board.movePiece(move);
+                MoveAndScore moveAndScore = minimax(board, otherPlayer, depth - 1, alpha, beta, originalPlayer);
+                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+//                    System.out.println(player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                }
+//                alpha = Math.max(alpha, score);
+//                if (beta <= alpha) {
+//                    System.out.println("prunned "+move);
+//                    break; // Prune the branch if alpha exceeds beta (maximizing player can't do worse)
+//                }
+            }
+        } else {
+            bestScore = Integer.MAX_VALUE;
+            for (Move move : possibleMoves) {
+//                Board newBoard = copyBoard(board);
+//                newBoard.movePiece(move);
+                board.movePiece(move);
+                MoveAndScore moveAndScore = minimax(board, otherPlayer, depth - 1, alpha, beta, originalPlayer);
+                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+
+                }
+//                beta = Math.min(beta, score);
+//                if (beta <= alpha) {
+//                    break; // Prune the branch if beta falls below alpha (minimizing player can't do better)
+//                }
+            }
+        }
+        return new MoveAndScore(bestMove, bestScore);
+    }
+
+
+    public MoveAndScore minimax2(Board board, Player player, int depth, int alpha, int beta, Player originalPlayer) {
+        // Check if we reached the terminal state (game over or depth limit reached)
+        Player otherPlayer = player.equals(Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        if (isGameOver(board)) {
+            boolean thisPlayerWon = player.equals(Player.PLAYER1)
+                    ? player2Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList())
+                    : player1Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList());
+            if (thisPlayerWon) return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MIN_VALUE);
+            else return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MAX_VALUE);
+        } else if (depth == 0) {
+            return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), heuristic(board, otherPlayer));
+        }
+
+        List<Move> possibleMoves = board.possibleMoves(player);
+
+        // This variable will store the best score found so far
+        int bestScore;
+        Move bestMove = null;
+
+        if (player.equals(originalPlayer)) {
+            bestScore = Integer.MIN_VALUE;
+            for (Move move : possibleMoves) {
+                Board newBoard = copyBoard(board); // Create a copy of the board to avoid modifying the original
+                newBoard.movePiece(move);
+//                board.movePiece(move);
+                MoveAndScore moveAndScore = minimax(newBoard, Player.PLAYER2, depth - 1, alpha, beta, originalPlayer);
+//                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+//                    System.out.println(player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                }
+//                alpha = Math.max(alpha, score);
+//                if (beta <= alpha) {
+//                    System.out.println("prunned "+move);
+//                    break; // Prune the branch if alpha exceeds beta (maximizing player can't do worse)
+//                }
+            }
+        } else {
+            bestScore = Integer.MAX_VALUE;
+            for (Move move : possibleMoves) {
+                Board newBoard = copyBoard(board);
+                newBoard.movePiece(move);
+//                board.movePiece(move);
+                MoveAndScore moveAndScore = minimax(newBoard, Player.PLAYER1, depth - 1, alpha, beta, originalPlayer);
+//                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+
+                }
+//                beta = Math.min(beta, score);
+//                if (beta <= alpha) {
+//                    break; // Prune the branch if beta falls below alpha (minimizing player can't do better)
+//                }
+            }
+        }
+        return new MoveAndScore(bestMove, bestScore);
+    }
+
+
+    public MoveAndScore alfabeta(Board board, Player player, int depth, int alpha, int beta, Player originalPlayer) {
+        // Check if we reached the terminal state (game over or depth limit reached)
+        Player otherPlayer = player.equals(Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        if (isGameOver(board)) {
+            boolean thisPlayerWon = player.equals(Player.PLAYER1)
+                    ? player2Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList())
+                    : player1Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList());
+            if (thisPlayerWon) return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MIN_VALUE);
+            else return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MAX_VALUE);
+        } else if (depth == 0) {
+            return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), board.heuristic3(otherPlayer));
+        }
+
+        List<Move> possibleMoves = board.possibleMoves(player);
+
+        // This variable will store the best score found so far
+        int bestScore;
+        Move bestMove = null;
+
+        if (player.equals(originalPlayer)) {
+            bestScore = Integer.MIN_VALUE;
+            for (Move move : possibleMoves) {
+//                Board newBoard = copyBoard(board); // Create a copy of the board to avoid modifying the original
+//                newBoard.movePiece(move);
+                board.movePiece(move);
+                MoveAndScore moveAndScore = alfabeta(board, otherPlayer, depth - 1, alpha, beta, originalPlayer);
+                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " :: "+ originalPlayer + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+//                    System.out.println(player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                }
+                alpha = Math.max(alpha, score);
+//                System.out.println("alpha:"+alpha+" ::: beta:"+beta);
+                if (beta <= alpha) {
+//                    System.out.println("prunned:"+move+" a:"+alpha+" b:"+beta+" depth:"+depth+" ");
+                    break; // Prune the branch if alpha exceeds beta (maximizing player can't do worse)
+                }
+            }
+        } else {
+            bestScore = Integer.MAX_VALUE;
+            for (Move move : possibleMoves) {
+//                Board newBoard = copyBoard(board);
+//                newBoard.movePiece(move);
+                board.movePiece(move);
+                MoveAndScore moveAndScore = alfabeta(board, otherPlayer, depth - 1, alpha, beta, originalPlayer);
+                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+
+                }
+                beta = Math.min(beta, score);
+//                System.out.println("alpha:"+alpha+" ::: beta:"+beta);
+                if (beta <= alpha) {
+//                    System.out.println("prunned:"+move+" a:"+alpha+" b:"+beta+" depth:"+depth+" ");
+                    break; // Prune the branch if beta falls below alpha (minimizing player can't do better)
+                }
+            }
+        }
+        return new MoveAndScore(bestMove, bestScore);
+    }
+
+    public MoveAndScore alfabeta2(Board board, Player player, int depth, int alpha, int beta, Player originalPlayer) {
+        // Check if we reached the terminal state (game over or depth limit reached)
+        Player otherPlayer = player.equals(Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        if (isGameOver(board)) {
+            boolean thisPlayerWon = player.equals(Player.PLAYER1)
+                    ? player2Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList())
+                    : player1Base.equals(board.board.keySet().stream().filter(c -> board.board.get(c) == player).toList());
+            if (thisPlayerWon) return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MIN_VALUE);
+            else return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), Integer.MAX_VALUE);
+        } else if (depth == 0) {
+            return new MoveAndScore(Move.of(Tile.of(0, 0), Tile.of(0, 0)), heuristic(board, otherPlayer));
+        }
+
+        List<Move> possibleMoves = board.possibleMoves(player);
+
+        // This variable will store the best score found so far
+        int bestScore;
+        Move bestMove = null;
+
+        if (player.equals(originalPlayer)) {
+            bestScore = Integer.MIN_VALUE;
+            for (Move move : possibleMoves) {
+//                Board newBoard = copyBoard(board); // Create a copy of the board to avoid modifying the original
+//                newBoard.movePiece(move);
+                board.movePiece(move);
+                MoveAndScore moveAndScore = alfabeta2(board, otherPlayer, depth - 1, alpha, beta, originalPlayer);
+                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " :: "+ originalPlayer + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+//                    System.out.println(player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                }
+                alpha = Math.max(alpha, score);
+//                System.out.println("alpha:"+alpha+" ::: beta:"+beta);
+                if (beta <= alpha) {
+//                    System.out.println("prunned:"+move+" a:"+alpha+" b:"+beta+" depth:"+depth+" ");
+                    break; // Prune the branch if alpha exceeds beta (maximizing player can't do worse)
+                }
+            }
+        } else {
+            bestScore = Integer.MAX_VALUE;
+            for (Move move : possibleMoves) {
+//                Board newBoard = copyBoard(board);
+//                newBoard.movePiece(move);
+                board.movePiece(move);
+                MoveAndScore moveAndScore = alfabeta2(board, otherPlayer, depth - 1, alpha, beta, originalPlayer);
+                board.reversePiece(move);
+                int score = moveAndScore.getScore();
+//                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+
+                }
+                beta = Math.min(beta, score);
+//                System.out.println("alpha:"+alpha+" ::: beta:"+beta);
+                if (beta <= alpha) {
+//                    System.out.println("prunned:"+move+" a:"+alpha+" b:"+beta+" depth:"+depth+" ");
+                    break; // Prune the branch if beta falls below alpha (minimizing player can't do better)
+                }
+            }
+        }
+        return new MoveAndScore(bestMove, bestScore);
+    }
+
+
+    // Helper methods to check game over, copy the board, and choose the heuristic
+    public boolean isGameOver(Board board) {
+        // TODO Implement your logic to check if either player can't move or some other win condition is met
+        List<Tile> player1Tiles = board.board.keySet().stream().filter(c -> board.board.get(c) == Player.PLAYER1).toList();
+        List<Tile> player2Tiles = board.board.keySet().stream().filter(c -> board.board.get(c) == Player.PLAYER2).toList();
+        return player1Tiles.equals(player2Base) || player1Base.equals(player2Tiles);
+    }
+
+    private Board copyBoard(Board board) {
+        Board newBoard = new Board();
+        // Copy the board state (tiles and player pieces) to the new board
+        for (Tile tile : board.board.keySet()) {
+            newBoard.board.put(tile, board.board.get(tile));
+        }
+        return newBoard;
+    }
+
+    private int heuristic(Board board, Player player) {
+        // Choose the appropriate heuristic function (heuristic1, heuristic2, or heuristic3)
+        return board.heuristic2(player); // Replace with your preferred heuristic
+    }
+
+
 }
