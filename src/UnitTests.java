@@ -1,8 +1,10 @@
 import org.junit.Test;
 
+
 import java.util.*;
 
 public class UnitTests {
+
     @Test
     public void test1() {
         Board board = new Board();
@@ -42,7 +44,7 @@ public class UnitTests {
 
 
     @Test
-    public void checkHeurisctic1() {
+    public void checkHeuristic1() {
         Board board = new Board();
         int h2 = board.heuristic1(Player.PLAYER1);
         assert h2 == 40;
@@ -69,8 +71,7 @@ public class UnitTests {
     @Test
     public void checkMinimax() {
         Board board = new Board();
-        ArrayList<Move> moves = board.possibleMoves(Player.PLAYER1);
-        MoveAndScore result = board.minimax(new Board(), Player.PLAYER1, 1, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.minimax(new Board(), Player.PLAYER1, 1, Player.PLAYER1);
         System.out.println(result);
         board.movePiece(result.getMove());
         board.printBoard();
@@ -82,13 +83,13 @@ public class UnitTests {
 //        System.out.println(board.heuristic3(Player.PLAYER1));
 //        System.out.println(board.heuristic3(Player.PLAYER2));
 
-        MoveAndScore result = board.minimax(board, Player.PLAYER1, 1, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.minimax(board, Player.PLAYER1, 1, Player.PLAYER1);
         System.out.println(result);
         board.movePiece(result.getMove());
         board.printBoard();
 
 
-        result = board.minimax(board, Player.PLAYER2, 1, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER2);
+        result = board.minimax(board, Player.PLAYER2, 1, Player.PLAYER2);
         System.out.println(result);
         board.movePiece(result.getMove());
         board.printBoard();
@@ -113,16 +114,16 @@ public class UnitTests {
         Board board = new Board();
         int iter = 0;
 
-        MoveAndScore result = board.minimax(board, Player.PLAYER1, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.minimax(board, Player.PLAYER1, 3, Player.PLAYER1);
         System.out.println("Round 1:  "+Player.PLAYER1 + " " + result);
         board.movePiece(result.getMove());
         board.printBoard();
         iter++;
 
-        while (result.getScore() < Integer.MAX_VALUE && iter < 30) {
+        while (result.getScore() < Integer.MAX_VALUE && iter < 20) {
             long start = System.nanoTime();
             Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
-            result = board.minimax(board, currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
+            result = board.minimax(board, currentPlayer, 3, currentPlayer);
             System.out.println("Round "+(iter+1)+":  "+ currentPlayer + " " + result);
             board.movePiece(result.getMove());
             board.printBoard();
@@ -139,19 +140,23 @@ public class UnitTests {
         Board board = new Board();
         int iter = 0;
 
-        MoveAndScore result = board.minimax2(board, Player.PLAYER1, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.minimax2(board, Player.PLAYER1, 3, Player.PLAYER1);
         System.out.println(Player.PLAYER1 + " " + result);
         board.movePiece(result.getMove());
         board.printBoard();
         iter++;
 
-        while (result.getScore() < Integer.MAX_VALUE && iter < 30) {
+        while (result.getScore() < Integer.MAX_VALUE && iter < 20) {
+            long start = System.nanoTime();
             Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
-            result = board.minimax2(board, currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
-            System.out.println(currentPlayer + " " + result);
+            result = board.minimax2(board, currentPlayer, 3, currentPlayer);
+            System.out.println("Round "+(iter+1)+":  "+ currentPlayer + " " + result);
             board.movePiece(result.getMove());
             board.printBoard();
             iter++;
+            long finish = System.nanoTime();
+            long timeElapsed = finish - start;
+            System.out.println(timeElapsed/1000000+"ms\n");
         }
 
     }
@@ -265,7 +270,7 @@ public class UnitTests {
         System.out.println(board.heuristic2(Player.PLAYER1));
         System.out.println(board.heuristic2(Player.PLAYER2));
 
-        MoveAndScore result = board.minimax(board, Player.PLAYER1, 1, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.minimax(board, Player.PLAYER1, 1, Player.PLAYER1);
         System.out.println(result);
         board.movePiece(result.getMove());
         board.printBoard();
@@ -352,7 +357,7 @@ public class UnitTests {
 //        Move.of(Tile.of(13, 15), Tile.of(9, 11)
         System.out.println(Tile.of(11, 13));
         Set<Move> returnedMoves = board.singleJumpsForMove(Move.of(Tile.of(13,15), Tile.of(11, 13)));
-        Set<Move> testMoves = new HashSet<Move>();
+        Set<Move> testMoves = new HashSet<>();
         testMoves.add(Move.of(Tile.of(13, 15), Tile.of(9, 13)));
         testMoves.add(Move.of(Tile.of(13, 15), Tile.of(11, 11)));
         System.out.println(testMoves);
@@ -396,7 +401,7 @@ public class UnitTests {
         board.printBoard();
         iter++;
 
-        while (result.getScore() < Integer.MAX_VALUE && iter < 30) {
+        while (result.getScore() < Integer.MAX_VALUE && iter < 20) {
             long start = System.nanoTime();
             Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
             result = board.alfabeta(board, currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
@@ -416,7 +421,7 @@ public class UnitTests {
         Board board = new Board();
         int iter = 0;
 
-        MoveAndScore result = board.alfabeta(board, Player.PLAYER1, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.alfabeta(board, Player.PLAYER1, 1, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
         System.out.println(Player.PLAYER1 + " " + result);
         board.movePiece(result.getMove());
         board.printBoard();
@@ -425,7 +430,7 @@ public class UnitTests {
         while (!board.isGameOver(board)) {
             long start = System.nanoTime();
             Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
-            result = board.alfabeta(board, currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
+            result = board.alfabeta(board, currentPlayer, 1, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
             System.out.println("Round "+(iter+1)+":  "+ currentPlayer + " " + result);
             board.movePiece(result.getMove());
             board.printBoard();
@@ -434,6 +439,11 @@ public class UnitTests {
             long timeElapsed = finish - start;
             System.out.println(timeElapsed/1000000+"ms\n");
         }
+        System.out.println(board.whoWon(board));
+        //depth 4 - 26min 28sec
+        //depth 3 - 2min 27sec
+        //depth 2 - 5sec 406ms
+        //depth 1 - 979ms
     }
 
     @Test
@@ -441,7 +451,7 @@ public class UnitTests {
         Board board = new Board();
         int iter = 0;
 
-        MoveAndScore result = board.alfabeta2(board, Player.PLAYER1, 4, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.alfabeta2(board, Player.PLAYER1, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
         System.out.println(Player.PLAYER1 + " " + result);
         board.movePiece(result.getMove());
         board.printBoard();
@@ -450,7 +460,7 @@ public class UnitTests {
         while (!board.isGameOver(board)) {
             long start = System.nanoTime();
             Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
-            result = board.alfabeta2(board, currentPlayer, 4, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
+            result = board.alfabeta2(board, currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
             System.out.println("Round "+(iter+1)+":  "+ currentPlayer + " " + result);
             board.movePiece(result.getMove());
             board.printBoard();
@@ -459,6 +469,31 @@ public class UnitTests {
             long timeElapsed = finish - start;
             System.out.println(timeElapsed/1000000+"ms\n");
         }
+        //depth 4 - 26min 28sec
+        //depth 3 - 2min 27sec
+        //depth 2 - 5sec 406ms
+        //depth 1 - 979ms
+    }
+
+    @Test
+    public void fullGame3(){
+        Board board = new Board();
+        int iter = 0;
+
+        MoveAndScore result = null;
+        while (!board.isGameOverMod()) {
+            long start = System.nanoTime();
+            Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
+            result = board.alfabetaMod(currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
+            System.out.println("Round "+(iter+1)+":  "+ currentPlayer + " " + result);
+            board.movePiece(result.getMove());
+            board.printBoard();
+            iter++;
+            long finish = System.nanoTime();
+            long timeElapsed = finish - start;
+            System.out.println(timeElapsed/1000000+"ms\n");
+        }
+        System.out.println(board.whoWonMod());
     }
 
 
