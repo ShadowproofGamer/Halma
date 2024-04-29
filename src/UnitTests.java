@@ -451,7 +451,7 @@ public class UnitTests {
         Board board = new Board();
         int iter = 0;
 
-        MoveAndScore result = board.alfabeta2(board, Player.PLAYER1, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
+        MoveAndScore result = board.alfabeta2(board, Player.PLAYER1, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1);
         System.out.println(Player.PLAYER1 + " " + result);
         board.movePiece(result.getMove());
         board.printBoard();
@@ -460,7 +460,7 @@ public class UnitTests {
         while (!board.isGameOver(board)) {
             long start = System.nanoTime();
             Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
-            result = board.alfabeta2(board, currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
+            result = board.alfabeta2(board, currentPlayer, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
             System.out.println("Round "+(iter+1)+":  "+ currentPlayer + " " + result);
             board.movePiece(result.getMove());
             board.printBoard();
@@ -484,7 +484,7 @@ public class UnitTests {
         while (!board.isGameOverMod()) {
             long start = System.nanoTime();
             Player currentPlayer = iter % 2 == 0 ? Player.PLAYER1 : Player.PLAYER2;
-            result = board.alfabetaMod(currentPlayer, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
+            result = board.alfabetaMod(currentPlayer, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, currentPlayer);
             System.out.println("Round "+(iter+1)+":  "+ currentPlayer + " " + result);
             board.movePiece(result.getMove());
             board.printBoard();
@@ -494,6 +494,96 @@ public class UnitTests {
             System.out.println(timeElapsed/1000000+"ms\n");
         }
         System.out.println(board.whoWonMod());
+    }
+
+    @Test
+    public void fullGame4(){
+        Board2 board = new Board2();
+        int iter = 0;
+
+        MoveAndScore result = null;
+        while (!board.isGameOverMod()) {
+            //player1
+            long start = System.nanoTime();
+            result = board.alfabeta(Player.PLAYER1, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1, new Heuristic1());
+            System.out.println("Round "+(iter+1)+":  "+ Player.PLAYER1 + " " + result);
+            board.movePiece(result.getMove());
+            board.printBoard();
+            iter++;
+            long finish = System.nanoTime();
+            long timeElapsed = finish - start;
+            System.out.println(timeElapsed/1000000+"ms\n");
+            //check if player1 won
+            if (board.isGameOverMod()) break;
+            //player2
+            start = System.nanoTime();
+            result = board.alfabeta(Player.PLAYER2, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER2, new Heuristic1());
+            System.out.println("Round "+(iter+1)+":  "+ Player.PLAYER2 + " " + result);
+            board.movePiece(result.getMove());
+            board.printBoard();
+            iter++;
+            finish = System.nanoTime();
+            timeElapsed = finish - start;
+            System.out.println(timeElapsed/1000000+"ms\n");
+        }
+        System.out.println(board.whoWonMod());
+    }
+
+    @Test
+    public void fullGameHeuristics12() throws InterruptedException {
+        GameLoop gameLoop = new GameLoop(2, new Heuristic1(), new Heuristic2(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
+    }
+
+    @Test
+    public void mirrorPieceTest(){
+        Board2 board2 = new Board2();
+        Move testMove = Move.of(Tile.of(12, 15), Tile.of(10, 13));
+        board2.movePiece(testMove);
+        board2.printBoard();
+        board2.mirrorPiece(testMove);
+        board2.printBoard();
+    }
+
+
+    @Test
+    public void boardTest5(){
+        Board2 board2 = new Board2("""
+                1 1 1 1 1 _ _ _ _ _ _ _ _ _ _ _\s
+                1 1 1 1 1 _ _ _ _ _ _ _ _ _ _ _\s
+                1 1 1 1 _ _ _ _ 2 _ _ _ _ _ _ _\s
+                1 1 1 _ _ _ 2 2 _ _ _ _ _ _ _ _\s
+                1 _ _ _ 2 _ _ _ 2 2 _ _ _ _ _ _\s
+                _ _ _ _ 2 _ 2 _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ 2 _ _ 2 _ _ _ _ _ _ _\s
+                _ _ _ 2 _ _ _ 2 _ _ _ _ _ _ _ _\s
+                _ _ _ _ 2 2 _ 2 _ _ _ _ _ _ _ _\s
+                _ 2 2 _ _ _ _ _ _ _ 1 _ _ _ _ _\s
+                _ _ _ 2 _ _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ 2 _ _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s""");
+        System.out.println(board2.possibleMoves(Player.PLAYER1));
+        Tile tileFrom = Tile.of(1, 2);
+        Tile tileTo = Tile.of(1, 4);
+        System.out.println(board2.isValidMove(Move.of(tileFrom, tileTo)));
+    }
+
+    @Test
+    public void fullGameHeuristics1R() throws InterruptedException {
+        GameLoop gameLoop = new GameLoop(2, new Heuristic1(), new HeuristicRandom(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
+    }
+
+    @Test
+    public void fullGameHeuristics21() throws InterruptedException {
+        GameLoop gameLoop = new GameLoop(2, new Heuristic2(), new Heuristic1(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
     }
 
 

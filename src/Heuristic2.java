@@ -1,7 +1,10 @@
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Heuristic1 implements Heuristic{
+// Prioritize jumps heavily
+public class Heuristic2 implements Heuristic{
+
+    @Override
     public int calculate(Board2 board, Player player) {
         AtomicInteger result = new AtomicInteger(0);
         List<Tile> player1Tiles = board.state.keySet().stream().filter(c -> board.state.get(c).equals(Player.PLAYER1)).toList();
@@ -12,42 +15,46 @@ public class Heuristic1 implements Heuristic{
         if (player.equals(Player.PLAYER1)){
             player1Tiles.forEach(tile -> {
                 if (player1Base.contains(tile)) {
-                    result.getAndAdd(-15);
+                    result.getAndAdd(-5);
                 } else if (player2Base.contains(tile)) {
-                    result.getAndAdd(5);
-                }
-                result.getAndAdd((MAXLEN - tile.getX() + MAXLEN - tile.getY())*2);
-            });
-            player2Tiles.forEach(tile -> {
-                if (player2Base.contains(tile)) {
-                    result.getAndAdd(5);
-                }
-                if (player1Base.contains(tile)) {
-                    result.getAndAdd(-3);
-                }
-                result.getAndAdd(-tile.getX() - tile.getY());
-            });
-            return result.get();
-        }
-        else {
-            player1Tiles.forEach(tile -> {
-                if (player1Base.contains(tile)) {
-                    result.getAndAdd(5);
-                } else if (player2Base.contains(tile)) {
-                    result.getAndAdd(-3);
+                    result.getAndAdd(3);
                 }
                 result.getAndAdd(MAXLEN - tile.getX() + MAXLEN - tile.getY());
             });
+            result.getAndAdd((int) (board.jumpMoves(Player.PLAYER1).size() * 0.3)); // Prioritize jumps heavily
             player2Tiles.forEach(tile -> {
                 if (player2Base.contains(tile)) {
-                    result.getAndAdd(-15);
-                }
-                if (player1Base.contains(tile)) {
                     result.getAndAdd(5);
+                } else if (player1Base.contains(tile)) {
+                    result.getAndAdd(-3);
                 }
-                result.getAndAdd((-tile.getX() - tile.getY())*-2);
+                result.getAndAdd(- tile.getX() - tile.getY());
             });
+            result.getAndAdd((int) (board.jumpMoves(Player.PLAYER2).size() * -0.3)); // Prioritize jumps heavily
+
             return result.get();
+        }else {
+            player1Tiles.forEach(tile -> {
+                if (player1Base.contains(tile)) {
+                    result.getAndAdd(-5);
+                } else if (player2Base.contains(tile)) {
+                    result.getAndAdd(3);
+                }
+                result.getAndAdd(MAXLEN - tile.getX() + MAXLEN - tile.getY());
+            });
+            result.getAndAdd((int) (board.jumpMoves(Player.PLAYER1).size() * 0.3)); // Prioritize jumps heavily
+            player2Tiles.forEach(tile -> {
+                if (player2Base.contains(tile)) {
+                    result.getAndAdd(5);
+                } else if (player1Base.contains(tile)) {
+                    result.getAndAdd(-3);
+                }
+                result.getAndAdd(- tile.getX() - tile.getY());
+            });
+            result.getAndAdd((int) (board.jumpMoves(Player.PLAYER2).size() * -0.3)); // Prioritize jumps heavily
+
+            return -1*result.get();
         }
+
     }
 }
