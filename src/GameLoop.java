@@ -7,6 +7,7 @@ public class GameLoop extends Thread{
     private final Heuristic heuristic2;
     private final boolean visualMode;
     private Vector<GameResults> allResults;
+    private Board2 startBoard;
 
     public GameLoop(int depth, Heuristic heuristic1, Heuristic heuristic2, boolean visualMode, Vector<GameResults> allResults) {
         this.depth = depth;
@@ -14,6 +15,15 @@ public class GameLoop extends Thread{
         this.heuristic2 = heuristic2;
         this.visualMode = visualMode;
         this.allResults = allResults;
+        this.startBoard = new Board2();
+    }
+    public GameLoop(int depth, Heuristic heuristic1, Heuristic heuristic2, boolean visualMode, Vector<GameResults> allResults, Board2 startBoard) {
+        this.depth = depth;
+        this.heuristic1 = heuristic1;
+        this.heuristic2 = heuristic2;
+        this.visualMode = visualMode;
+        this.allResults = allResults;
+        this.startBoard = startBoard;
     }
     public GameLoop(){
         this.depth = 2;
@@ -21,11 +31,12 @@ public class GameLoop extends Thread{
         this.heuristic2 = new Heuristic1();
         this.visualMode = true;
         this.allResults = new Vector<>();
+        this.startBoard = new Board2();
     }
 
 
     public void fullGame(){
-        Board2 board = new Board2();
+        Board2 board = startBoard;
         int iter = 0;
         long startGame = System.nanoTime();
         int nodesVisited = 0;

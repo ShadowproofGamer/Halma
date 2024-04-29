@@ -586,5 +586,19 @@ public class UnitTests {
         gameLoop.join();
     }
 
+    @Test
+    public void fgStartRand() throws InterruptedException {
+        Board2 board2 = new Board2();
+        for (int i = 0; i < 3; i++) {
+            Move temp = board2.randomMove(Player.PLAYER1);
+            board2.movePiece(temp);
+            board2.mirrorPiece(temp);
+        }
+        board2.printBoard();
+        GameLoop gameLoop = new GameLoop(2, new Heuristic2(), new Heuristic1(), true, new Vector<>(), board2);
+        gameLoop.start();
+        gameLoop.join();
+    }
+
 
 }

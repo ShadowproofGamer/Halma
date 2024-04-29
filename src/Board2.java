@@ -106,6 +106,11 @@ public class Board2 {
         state.put(move.getTileTo(), player);
     }
 
+    public Move randomMove(Player player){
+        ArrayList<Move> moveArrayList = possibleMoves(player);
+        return moveArrayList.get(new Random().nextInt(moveArrayList.size()));
+    }
+
     public void mirrorPiece(Move move){
         int MAXLEN = 15;
         Tile startTile = move.getTileFrom();
