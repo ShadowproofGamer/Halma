@@ -2,7 +2,7 @@ import java.util.Vector;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        runConcurrentGames(2, new Heuristic1(), new Heuristic1(), 100);
+        runConcurrentGames(2, new HeuristicSimple(), new HeuristicSimpleWeight(), 50);
 
 
     }
@@ -13,15 +13,15 @@ public class Main {
         int inlineIterations = iterations / 5;
         for (int i = 0; i < inlineIterations; i++) {
             //starting concurrent games
-            GameLoop gameLoop = new GameLoop(depth, h1, h2, false, gameResultsVector);
+            GameLoop gameLoop = new GameLoop(depth, h1, h2, false, gameResultsVector, getRandBoard());
             gameLoop.start();
-            GameLoop gameLoop2 = new GameLoop(depth, h1, h2, false, gameResultsVector);
+            GameLoop gameLoop2 = new GameLoop(depth, h1, h2, false, gameResultsVector, getRandBoard());
             gameLoop2.start();
-            GameLoop gameLoop3 = new GameLoop(depth, h1, h2, false, gameResultsVector);
+            GameLoop gameLoop3 = new GameLoop(depth, h1, h2, false, gameResultsVector, getRandBoard());
             gameLoop3.start();
-            GameLoop gameLoop4 = new GameLoop(depth, h1, h2, false, gameResultsVector);
+            GameLoop gameLoop4 = new GameLoop(depth, h1, h2, false, gameResultsVector, getRandBoard());
             gameLoop4.start();
-            GameLoop gameLoop5 = new GameLoop(depth, h1, h2, false, gameResultsVector);
+            GameLoop gameLoop5 = new GameLoop(depth, h1, h2, false, gameResultsVector, getRandBoard());
             gameLoop5.start();
 
             //waiting for games to end before running the next ones
@@ -67,6 +67,16 @@ public class Main {
             nodesVisited+= gameResults.getNodesVisited();
 
         }
-        System.out.println("Player 1 wins: "+player1Wins+ ",   Player 2 wins: "+player2Wins+",   Player 1 winrate:"+(player1Wins/(player1Wins+player2Wins))+ ",   average time elapsed: "+(timeElapsed/gameResultsVector.size())+"ms,   average nodes visited: "+ (nodesVisited/gameResultsVector.size()) );
+        System.out.println("Player 1 wins: "+player1Wins+ ",   Player 2 wins: "+player2Wins+",   Player 1 winrate:"+((float)player1Wins/((float) (player1Wins+player2Wins)))+ ",   average time elapsed: "+(timeElapsed/gameResultsVector.size())+"ms,   average nodes visited: "+ (nodesVisited/gameResultsVector.size()) );
+    }
+
+    private static Board2 getRandBoard(){
+        Board2 board2 = new Board2();
+        for (int i = 0; i < 7; i++) {
+            Move temp = board2.randomMove(Player.PLAYER1);
+            board2.movePiece(temp);
+            board2.mirrorPiece(temp);
+        }
+        return board2;
     }
 }

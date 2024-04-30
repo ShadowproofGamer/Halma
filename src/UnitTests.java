@@ -531,7 +531,7 @@ public class UnitTests {
 
     @Test
     public void fullGameHeuristics12() throws InterruptedException {
-        GameLoop gameLoop = new GameLoop(2, new Heuristic1(), new Heuristic2(), true, new Vector<>());
+        GameLoop gameLoop = new GameLoop(2, new Heuristic1(), new HeuristicJumps(), true, new Vector<>());
         gameLoop.start();
         gameLoop.join();
     }
@@ -581,7 +581,7 @@ public class UnitTests {
 
     @Test
     public void fullGameHeuristics21() throws InterruptedException {
-        GameLoop gameLoop = new GameLoop(2, new Heuristic2(), new Heuristic1(), true, new Vector<>());
+        GameLoop gameLoop = new GameLoop(2, new HeuristicJumps(), new Heuristic1(), true, new Vector<>());
         gameLoop.start();
         gameLoop.join();
     }
@@ -589,16 +589,178 @@ public class UnitTests {
     @Test
     public void fgStartRand() throws InterruptedException {
         Board2 board2 = new Board2();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 7; i++) {
             Move temp = board2.randomMove(Player.PLAYER1);
             board2.movePiece(temp);
             board2.mirrorPiece(temp);
         }
         board2.printBoard();
-        GameLoop gameLoop = new GameLoop(2, new Heuristic2(), new Heuristic1(), true, new Vector<>(), board2);
+        GameLoop gameLoop = new GameLoop(2, new HeuristicJumps(), new Heuristic1(), true, new Vector<>(), board2);
         gameLoop.start();
         gameLoop.join();
     }
 
+    @Test
+    public void fullGameHeuristics1S() throws InterruptedException {
+        GameLoop gameLoop = new GameLoop(2, new Heuristic1(), new HeuristicSimple(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
+    }
+
+    @Test
+    public void fullGameHeuristics1WS() throws InterruptedException {
+        GameLoop gameLoop = new GameLoop(2, new Heuristic1(), new HeuristicSimpleWeight(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
+    }
+
+    @Test
+    public void fullGameHeuristicsSWS() throws InterruptedException {
+        GameLoop gameLoop = new GameLoop(2, new HeuristicSimple(), new HeuristicSimpleWeight(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
+    }
+
+    @Test
+    public void checkMinimax4() {
+        Board2 board2 = new Board2("""
+                _ 2 _ _ _ 2 _ _ _ 2 _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                2 _ _ _ _ 2 _ 1 _ 2 2 _ _ _ _ _\s
+                _ _ _ 2 _ _ _ 2 _ _ _ 2 2 _ _ _\s
+                _ _ _ _ 2 _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 2 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ 1 1 _ 1 _ 2 _ 1 _ _\s
+                _ _ _ _ _ _ _ _ 2 1 _ _ _ 1 2 _\s
+                _ _ _ _ _ 1 1 _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ 1 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ 2 _ _ 1 _ _ 1 _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s""");
+        long start = System.nanoTime();
+        MoveAndScore result = board2.minimax(board2, Player.PLAYER1, 1, Player.PLAYER1);
+        long end = System.nanoTime();
+        System.out.println("time elapsed: "+((end-start)/1000000)+"ms    result: "+result);
+        Board2 board3 = new Board2("""
+                _ 2 _ _ _ 2 _ _ _ 2 _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                2 _ _ _ _ 2 _ 1 _ 2 2 _ _ _ _ _\s
+                _ _ _ 2 _ _ _ 2 _ _ _ 2 2 _ _ _\s
+                _ _ _ _ 2 _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 2 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ 1 1 _ 1 _ 2 _ 1 _ _\s
+                _ _ _ _ _ _ _ _ 2 1 _ _ _ 1 2 _\s
+                _ _ _ _ _ 1 1 _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ 1 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ 2 _ _ 1 _ _ 1 _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s""");
+        long start2 = System.nanoTime();
+        MoveAndScore result2 = board3.minimax(board3, Player.PLAYER1, 2, Player.PLAYER1);
+        long end2 = System.nanoTime();
+        System.out.println("time elapsed: "+((end2-start2)/1000000)+"ms    result: "+result2);
+
+        Board2 board4 = new Board2("""
+                _ 2 _ _ _ 2 _ _ _ 2 _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                2 _ _ _ _ 2 _ 1 _ 2 2 _ _ _ _ _\s
+                _ _ _ 2 _ _ _ 2 _ _ _ 2 2 _ _ _\s
+                _ _ _ _ 2 _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 2 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ 1 1 _ 1 _ 2 _ 1 _ _\s
+                _ _ _ _ _ _ _ _ 2 1 _ _ _ 1 2 _\s
+                _ _ _ _ _ 1 1 _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ 1 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ 2 _ _ 1 _ _ 1 _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s""");
+        long start4 = System.nanoTime();
+        MoveAndScore result4 = board4.minimax(board4, Player.PLAYER1, 3, Player.PLAYER1);
+        long end4 = System.nanoTime();
+        System.out.println("time elapsed: "+((end4-start4)/1000000)+"ms    result: "+result4);
+
+        Board2 board5 = new Board2("""
+                _ 2 _ _ _ 2 _ _ _ 2 _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                2 _ _ _ _ 2 _ 1 _ 2 2 _ _ _ _ _\s
+                _ _ _ 2 _ _ _ 2 _ _ _ 2 2 _ _ _\s
+                _ _ _ _ 2 _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 2 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ 1 1 _ 1 _ 2 _ 1 _ _\s
+                _ _ _ _ _ _ _ _ 2 1 _ _ _ 1 2 _\s
+                _ _ _ _ _ 1 1 _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ 1 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ 2 _ _ 1 _ _ 1 _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s""");
+        long start5 = System.nanoTime();
+        MoveAndScore result5 = board2.minimax(board5, Player.PLAYER1, 4, Player.PLAYER1);
+        long end5 = System.nanoTime();
+        System.out.println("time elapsed: "+((end5-start5)/1000000)+"ms    result: "+result5);
+
+        System.out.println(result5);
+//        board2.printBoard();
+    }
+
+    @Test
+    public void checkAlfabeta() {
+        Board2 board2 = new Board2("""
+                _ 2 _ _ _ 2 _ _ _ 2 _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                2 _ _ _ _ 2 _ 1 _ 2 2 _ _ _ _ _\s
+                _ _ _ 2 _ _ _ 2 _ _ _ 2 2 _ _ _\s
+                _ _ _ _ 2 _ _ _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 2 _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 2 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ _ 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ 1 1 _ 1 _ 2 _ 1 _ _\s
+                _ _ _ _ _ _ _ _ 2 1 _ _ _ 1 2 _\s
+                _ _ _ _ _ 1 1 _ _ _ _ _ _ _ _ _\s
+                _ _ _ _ _ _ _ 1 1 _ _ _ 1 _ _ _\s
+                _ _ _ _ _ _ _ _ _ _ 1 _ _ _ _ _\s
+                _ _ _ _ _ _ _ 2 _ _ 1 _ _ 1 _ _\s
+                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\s""");
+        long start = System.nanoTime();
+        MoveAndScore result = board2.alfabeta(Player.PLAYER1, 1, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1, new Heuristic1());
+        long end = System.nanoTime();
+        System.out.println("time elapsed: "+((end-start)/1000000)+"ms    result: "+result);
+
+        long start2 = System.nanoTime();
+        MoveAndScore result2 = board2.alfabeta(Player.PLAYER1, 2, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1, new Heuristic1());
+        long end2 = System.nanoTime();
+        System.out.println("time elapsed: "+((end2-start2)/1000000)+"ms    result: "+result2);
+
+        long start4 = System.nanoTime();
+        MoveAndScore result4 = board2.alfabeta(Player.PLAYER1, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1, new Heuristic1());
+        long end4 = System.nanoTime();
+        System.out.println("time elapsed: "+((end4-start4)/1000000)+"ms    result: "+result4);
+
+
+        long start5 = System.nanoTime();
+        MoveAndScore result5 = board2.alfabeta(Player.PLAYER1, 4, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1, new Heuristic1());
+        long end5 = System.nanoTime();
+        System.out.println("time elapsed: "+((end5-start5)/1000000)+"ms    result: "+result5);
+
+        long start6 = System.nanoTime();
+        MoveAndScore result6 = board2.alfabeta(Player.PLAYER1, 5, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1, new Heuristic1());
+        long end6 = System.nanoTime();
+        System.out.println("time elapsed: "+((end6-start6)/1000000)+"ms    result: "+result6);
+
+//        System.out.println(result5);
+//        board2.printBoard();
+    }
 
 }

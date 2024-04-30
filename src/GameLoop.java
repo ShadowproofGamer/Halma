@@ -80,6 +80,7 @@ public class GameLoop extends Thread{
             System.out.println(gameResults);
         }
         allResults.add(gameResults);
+        System.out.println(this+"Game finished");
     }
     @Override
     public void run() {

@@ -2,7 +2,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 // Prioritize jumps heavily
-public class Heuristic2 implements Heuristic{
+public class HeuristicJumps implements Heuristic{
 
     @Override
     public int calculate(Board2 board, Player player) {

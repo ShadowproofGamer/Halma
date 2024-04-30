@@ -111,6 +111,14 @@ public class Board2 {
         return moveArrayList.get(new Random().nextInt(moveArrayList.size()));
     }
 
+    public void randomStart(int ply){
+        for (int i = 0; i < ply; i++) {
+            Move temp = randomMove(Player.PLAYER1);
+            movePiece(temp);
+            mirrorPiece(temp);
+        }
+    }
+
     public void mirrorPiece(Move move){
         int MAXLEN = 15;
         Tile startTile = move.getTileFrom();
@@ -369,12 +377,14 @@ public class Board2 {
         // This variable will store the best score found so far
         int bestScore;
         Move bestMove = null;
+        int nodesVisited = 0;
 
         if (player.equals(originalPlayer)) {
             bestScore = Integer.MIN_VALUE;
             for (Move move : possibleMoves) {
                 board.movePiece(move);
                 MoveAndScore moveAndScore = minimax(board, otherPlayer, depth - 1, originalPlayer);
+                nodesVisited+=moveAndScore.getNodesVisited();
                 board.reversePiece(move);
                 int score = moveAndScore.getScore();
 //                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
@@ -389,6 +399,7 @@ public class Board2 {
             for (Move move : possibleMoves) {
                 board.movePiece(move);
                 MoveAndScore moveAndScore = minimax(board, otherPlayer, depth - 1, originalPlayer);
+                nodesVisited+=moveAndScore.getNodesVisited();
                 board.reversePiece(move);
                 int score = moveAndScore.getScore();
 //                System.out.println("entered " + move + " :: " + score + " :: " + player + " ::  " + bestMove + " :: " + bestScore + " :: " + depth);
@@ -399,7 +410,7 @@ public class Board2 {
                 }
             }
         }
-        return new MoveAndScore(bestMove, bestScore);
+        return new MoveAndScore(bestMove, bestScore, nodesVisited);
     }
 
     public MoveAndScore alfabeta(Player player, int depth, int alpha, int beta, Player originalPlayer, Heuristic heuristic) {
@@ -536,7 +547,53 @@ public class Board2 {
 
     public int heuristic(Board2 board, Player player) {
         // Choose the appropriate heuristic function (heuristic1, heuristic2, or heuristic3)
-        return board.heuristic2(player); // Replace with your preferred heuristic
+//        return board.heuristic2(player); // Replace with your preferred heuristic
+        AtomicInteger result = new AtomicInteger(0);
+        List<Tile> player1Tiles = board.state.keySet().stream().filter(c -> board.state.get(c).equals(Player.PLAYER1)).toList();
+        List<Tile> player2Tiles = board.state.keySet().stream().filter(c -> board.state.get(c).equals(Player.PLAYER2)).toList();
+        List<Tile> player1Base = board.player1Base;
+        List<Tile> player2Base = board.player2Base;
+        int MAXLEN = 15;
+        if (player.equals(Player.PLAYER1)){
+            player1Tiles.forEach(tile -> {
+                if (player1Base.contains(tile)) {
+                    result.getAndAdd(-15);
+                } else if (player2Base.contains(tile)) {
+                    result.getAndAdd(5);
+                }
+                result.getAndAdd((MAXLEN - tile.getX() + MAXLEN - tile.getY())*2);
+            });
+            player2Tiles.forEach(tile -> {
+                if (player2Base.contains(tile)) {
+                    result.getAndAdd(5);
+                }
+                if (player1Base.contains(tile)) {
+                    result.getAndAdd(-3);
+                }
+                result.getAndAdd(-tile.getX() - tile.getY());
+            });
+            return result.get();
+        }
+        else {
+            player1Tiles.forEach(tile -> {
+                if (player1Base.contains(tile)) {
+                    result.getAndAdd(5);
+                } else if (player2Base.contains(tile)) {
+                    result.getAndAdd(-3);
+                }
+                result.getAndAdd(MAXLEN - tile.getX() + MAXLEN - tile.getY());
+            });
+            player2Tiles.forEach(tile -> {
+                if (player2Base.contains(tile)) {
+                    result.getAndAdd(-15);
+                }
+                if (player1Base.contains(tile)) {
+                    result.getAndAdd(5);
+                }
+                result.getAndAdd((-tile.getX() - tile.getY())*-2);
+            });
+            return result.get();
+        }
     }
 
 
