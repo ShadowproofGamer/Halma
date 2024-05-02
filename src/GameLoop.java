@@ -42,16 +42,17 @@ public class GameLoop extends Thread{
         int nodesVisited = 0;
 
         MoveAndScore result;
-        while (!board.isGameOverMod()) {
+        while (!board.isGameOverMod() && iter<500) {
             //player1
             long start = System.nanoTime();
             result = board.alfabeta(Player.PLAYER1, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER1, heuristic1);
             board.movePiece(result.getMove());
             nodesVisited+=result.getNodesVisited();
+            iter++;
             if (visualMode){
                 System.out.println("Round "+(iter+1)+":  "+ Player.PLAYER1 + " " + result);
                 board.printBoard();
-                iter++;
+
                 long finish = System.nanoTime();
                 long timeElapsed = finish - start;
                 System.out.println(timeElapsed/1000000+"ms\n");
@@ -64,10 +65,11 @@ public class GameLoop extends Thread{
             result = board.alfabeta(Player.PLAYER2, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, Player.PLAYER2, heuristic2);
             board.movePiece(result.getMove());
             nodesVisited+=result.getNodesVisited();
+            iter++;
             if (visualMode){
                 System.out.println("Round "+(iter+1)+":  "+ Player.PLAYER2 + " " + result);
                 board.printBoard();
-                iter++;
+
                 long finish = System.nanoTime();
                 long timeElapsed = finish - start;
                 System.out.println(timeElapsed/1000000+"ms\n");

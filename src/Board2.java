@@ -596,5 +596,16 @@ public class Board2 {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Board2 board2 = (Board2) o;
+        return Objects.equals(state, board2.state);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(state);
+    }
 }

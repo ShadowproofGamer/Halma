@@ -2,7 +2,7 @@ import java.util.Vector;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        runConcurrentGames(2, new HeuristicSimple(), new HeuristicSimpleWeight(), 50);
+        runConcurrentGames(3, new Heuristic1(), new Heuristic2(), 30);
 
 
     }
@@ -23,6 +23,7 @@ public class Main {
             gameLoop4.start();
             GameLoop gameLoop5 = new GameLoop(depth, h1, h2, false, gameResultsVector, getRandBoard());
             gameLoop5.start();
+
 
             //waiting for games to end before running the next ones
             gameLoop.join();

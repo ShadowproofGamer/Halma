@@ -763,4 +763,44 @@ public class UnitTests {
 //        board2.printBoard();
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Test
+    public void preFullGameHeuristicsOpt() throws InterruptedException {
+        GameLoop gameLoop = new GameLoop(2, new Heuristic1(), new Heuristic1(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
+    }
+    @Test
+    public void fullGameHeuristicsOpt() throws InterruptedException {
+
+        GameLoop gameLoop = new GameLoop(2, new Heuristic2(), new Heuristic2(), true, new Vector<>());
+        gameLoop.start();
+        gameLoop.join();
+    }
+
+
 }
